@@ -55,28 +55,25 @@ ps aux | grep [s]quid
 ss -lntp | grep ':3128' || true
 
 # DNS forwarder dnsmasq (→ 192.168.122.1)
-apt-get install -y dnsmasq
+apt update
+apt install bind9 -y
 
-# naikan limit biar tidak error "Too many open files"
-grep -q '^ULIMIT=' /etc/default/dnsmasq && \
-  sed -i 's/^ULIMIT=.*/ULIMIT=4096/' /etc/default/dnsmasq || \
-  echo 'ULIMIT=4096' >> /etc/default/dnsmasq
-sysctl -w fs.inotify.max_user_instances=1024
-sysctl -w fs.inotify.max_user_watches=1048576
-
-cat >/etc/dnsmasq.d/k07.conf <<'EOF'
-listen-address=10.67.5.2
-bind-interfaces
-server=192.168.122.1
-cache-size=1000
+cat > /etc/bind/named.conf.options << EOF
+options {
+    directory "/var/cache/bind";
+    forwarders {
+        192.168.122.1;
+    };
+    forward only;
+    allow-query { any; };
+    dnssec-validation no;
+    auth-nxdomain no;
+    listen-on-v6 { any; };
+};
 EOF
 
-# start (tanpa systemd pun jalan)
-service dnsmasq restart || {
-  pkill dnsmasq 2>/dev/null || true
-  nohup dnsmasq --listen-address=10.67.5.2 --bind-interfaces --server=192.168.122.1 \
-        --cache-size=1000 --log-facility=/var/log/dnsmasq.log >/dev/null 2>&1 &
-}
+service named restart
+
 # verifikasi listen di :53
 ss -lunp | grep ':53' || true
 
