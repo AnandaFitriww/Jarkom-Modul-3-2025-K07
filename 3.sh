@@ -100,7 +100,7 @@ ping google.com
 
 
 # penting untuk semua host (kalau mau buka internet harus pasang ini di setiap host)
-printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
+echo -e "nameserver 10.67.5.2\noptions timeout:2 attempts:2" > /etc/resolv.conf
 cat >/etc/apt/apt.conf.d/00proxy <<'EOF'
 Acquire::http::Proxy  "http://10.67.5.2:3128";
 Acquire::https::Proxy "http://10.67.5.2:3128";
