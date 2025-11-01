@@ -9,68 +9,73 @@ EOF
 apt update -o Acquire::ForceIPv4=true -y
 apt install -y isc-dhcp-server
 
-# Atur interface DHCP
+# Atur interface DHCP (udh tadi)
 nano /etc/default/isc-dhcp-server
 
 INTERFACESv4="eth1 eth2 eth3 eth4 eth5"
 INTERFACESv6=""
 
 # Konfigurasi file utama DHCP
-nano /etc/dhcp/dhcpd.conf
+cat > /etc/dhcp/dhcpd.conf  <<'EOF'
 authoritative;
 
-# Lease global (maksimal 1 jam)
+default-lease-time 600; #maks 1 jem
 max-lease-time 3600;
-default-lease-time 600;  # default global 10 menit
 
-# ========== MANUSIA ==========
+# Subnet Manusia
 subnet 10.67.1.0 netmask 255.255.255.0 {
   option routers 10.67.1.1;
   option broadcast-address 10.67.1.255;
   option subnet-mask 255.255.255.0;
   option domain-name-servers 10.67.5.2, 10.67.3.10;
-
-  # Lease waktu: 30 menit (1800 detik)
-  default-lease-time 1800;
-
-  range 10.67.1.6  10.67.1.34;
+  default-lease-time 1800; #min 30 men
+  range 10.67.1.6 10.67.1.34;
   range 10.67.1.68 10.67.1.94;
 }
 
-# ========== PERI ==========
+# Subnet Peri
 subnet 10.67.2.0 netmask 255.255.255.0 {
   option routers 10.67.2.1;
   option broadcast-address 10.67.2.255;
   option subnet-mask 255.255.255.0;
   option domain-name-servers 10.67.5.2, 10.67.3.10;
-
-  # Lease waktu: 10 menit (600 detik)
-  default-lease-time 600;
-
+  default-lease-time 600; #min 10 men
   range 10.67.2.35 10.67.2.67;
   range 10.67.2.96 10.67.2.121;
 }
-
-# ========== KURCACI / LAINNYA ==========
+# Subnet Erendis ^`^sAmdir ^`^sKhamul
 subnet 10.67.3.0 netmask 255.255.255.0 {
   option routers 10.67.3.1;
+  option broadcast-address 10.67.3.255;
   option subnet-mask 255.255.255.0;
+  option domain-name-servers 10.67.5.2, 10.67.3.10;
 }
 
+# Reservasi alamat tetap Khamul
+host khamul {
+  hardware ethernet 02:42:5c:d1:69:00;
+  fixed-address 10.67.3.95;
+}
+# Subnet Aldarion ^`^sPalantir ^`^sNarvi
 subnet 10.67.4.0 netmask 255.255.255.0 {
   option routers 10.67.4.1;
+  option broadcast-address 10.67.4.255;
   option subnet-mask 255.255.255.0;
+  option domain-name-servers 10.67.5.2, 10.67.3.10;
 }
 
+# Subnet Minastir
 subnet 10.67.5.0 netmask 255.255.255.0 {
   option routers 10.67.5.1;
+  option broadcast-address 10.67.5.255;
   option subnet-mask 255.255.255.0;
+  option domain-name-servers 10.67.5.2, 10.67.3.10;
 }
+EOF
 
-# Jalankan layanan DHCP server
-systemctl restart isc-dhcp-server || service isc-dhcp-server restart
-systemctl enable isc-dhcp-server || true
-systemctl status isc-dhcp-server --no-pager || true
+# kalankan ulang layanan DHCP server
+service isc-dhcp-server restart
+service isc-dhcp-server status --no-pager || true
 
 # Jika sistem tidak menggunakan systemd, cukup:
 /etc/init.d/isc-dhcp-server restart
@@ -83,12 +88,16 @@ INTERFACES="eth1 eth2 eth3 eth4 eth5"
 OPTIONS=""
 
 service isc-dhcp-relay restart
-systemctl enable isc-dhcp-relay || true
+service isc-dhcp-server status --no-pager || true
 
 # UJI DARI KLIEN (Manusia & Peri)
 # Klien MANUSIA (contoh: Amandil)
 # Tambahkan resolver awal
-echo "nameserver 192.168.122.1" > /etc/resolv.conf
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
+cat > /etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
 
 # Install DHCP client
 apt update -o Acquire::ForceIPv4=true -y
@@ -104,7 +113,11 @@ dhclient -r -v && dhclient -v
 
 # Klien PERI (contoh: Gilgalad)
 # Tambahkan resolver awal
-echo "nameserver 192.168.122.1" > /etc/resolv.conf
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
+cat > /etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
 
 # Install DHCP client
 apt update -o Acquire::ForceIPv4=true -y
@@ -117,6 +130,3 @@ dhclient -r -v && dhclient -v
 # DHCPOFFER of 10.67.2.xx from 10.67.2.1
 # DHCPACK ... bound to 10.67.2.xx -- renewal in 600 seconds.
 # → berarti lease 10 menit (600 detik).
-
-
-
