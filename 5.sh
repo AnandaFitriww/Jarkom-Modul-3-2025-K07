@@ -6,32 +6,45 @@ iptables -A FORWARD -p tcp --dport 53 -j ACCEPT
 command -v netfilter-persistent >/dev/null 2>&1 && netfilter-persistent save || true
 
 # MINASTIR – DNS Forwarder (dnsmasq) – 10.67.5.2
-apt update -y
-apt install -y dnsmasq
+nano /etc/bind/named.conf.options
+options {
+    directory "/var/cache/bind";
+    listen-on { 10.67.5.2; 127.0.0.1; };
+    allow-query { 10.67.0.0/16; 127.0.0.1; };
 
-# Base config: listen di loopback & IP Minastir
-cat >/etc/dnsmasq.d/base.conf <<'EOF'
-listen-address=127.0.0.1,10.67.5.2
-bind-interfaces
-cache-size=1000
-EOF
+    recursion yes;
+    forwarders {
+        192.168.122.1;
+    };
+    
+    #forward only; # hapus baris enih yah
+    dnssec-validation no;
+    auth-nxdomain no;
+};
 
-# Teruskan domain K07.com ke NS internal (Erendis & Amdir)
-cat >/etc/dnsmasq.d/k07.conf <<'EOF'
-server=/k07.com/10.67.3.10
-server=/k07.com/10.67.3.11
-EOF
+nano /etc/bind/named.conf.local
+zone "K07.com" {
+    type forward;
+    forwarders { 10.67.3.10; 10.67.3.11; }; # IP Erendis & Amdir
+};
+zone "3.67.10.in-addr.arpa" {
+    type forward;
+    forwarders { 10.67.3.10; 10.67.3.11; }; # IP Erendis & Amdir
+};
 
-# Pakai resolver lokal di Minastir (agar Squid/dll ikut dnsmasq)
-printf "nameserver 127.0.0.1\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
-
-# Restart dnsmasq (systemd atau init klasik)
-systemctl restart dnsmasq 2>/dev/null || service dnsmasq restart
+# restart service
+service named restart
 
 # Verifikasi
-ps aux | grep [d]nsmasq
 ss -lunp | grep ':53' || true
 dig @10.67.5.2 +short K07.com || true
+
+# tes dari klaien
+echo "nameserver 10.67.5.2" > /etc/resolv.conf
+# Tes query interna
+dig +short elendil.k07.com
+# Tes query internet (diteruskan ke 192.168.122.1)
+dig +short google.com
 
 # ERENDIS – DNS MASTER (BIND) – 10.67.3.10
 # Akses internet via Minastir (proxy & DNS)
