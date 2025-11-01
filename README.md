@@ -27,28 +27,30 @@
 
 | Nama Kota    | Interface | IP Address  | Gateway   |
 |--------------|-----------|-------------|-----------|
-| Durin    | eth1      | 10.67.1.1   | -         |
+| Durin   		| eth1      | 10.67.1.1   | -         |
 |              | eth2      | 10.67.2.1   | -         |
 |              | eth3      | 10.67.3.1   | -         |
-| Minastir    | eth0      | 10.67.1.2   | 10.67.1.1 |
-| Aldarion | eth0      | 10.67.1.3   | 10.67.1.1 |
-| Erendis     | eth0      | 10.67.2.2   | 10.67.2.1 |
-| Amdir   | eth0      | 10.67.2.3   | 10.67.2.1 |
+|              | eth4      | 10.67.3.1   | -         |
+|              | eth5      | 10.67.3.1   | -         |
+| Minastir 	   | eth0      | 10.67.1.2   | 10.67.1.1 |
+| Aldarion 		| eth0      | 10.67.1.3   | 10.67.1.1 |
+| Erendis  	   | eth0      | 10.67.2.2   | 10.67.2.1 |
+| Amdir  		| eth0      | 10.67.2.3   | 10.67.2.1 |
 | Palantir   | eth0      | 10.67.2.4   | 10.67.2.1 |
-| Narvi   | eth0      | 10.67.3.2   | 10.67.3.1 |
-| Elros   | eth0      | 10.67.3.3   | 10.67.3.1 |
+| Narvi  	 | eth0      | 10.67.3.2   | 10.67.3.1 |
+| Elros  	 | eth0      | 10.67.3.3   | 10.67.3.1 |
 | Pharazon   | eth0      | 10.67.3.4   | 10.67.3.1 |
-| Elendil   | eth0      | 10.67.3.5   | 10.67.3.1 |
-| Isildur   | eth0      | 10.67.3.6   | 10.67.3.1 |
+| Elendil 	  | eth0      | 10.67.3.5   | 10.67.3.1 |
+| Isildur 	  | eth0      | 10.67.3.6   | 10.67.3.1 |
 | Anarion    | eth0      | 10.67.1.2   | 10.67.1.1 |
-| Galadriel | eth0      | 10.67.1.3   | 10.67.1.1 |
+| Galadriel	 | eth0      | 10.67.1.3   | 10.67.1.1 |
 | Celeborn     | eth0      | 10.67.2.2   | 10.67.2.1 |
-| Oropher   | eth0      | 10.67.2.3   | 10.67.2.1 |
-| Miriel   | eth0      | 10.67.2.4   | 10.67.2.1 |
+| Oropher 	  | eth0      | 10.67.2.3   | 10.67.2.1 |
+| Miriel 	  | eth0      | 10.67.2.4   | 10.67.2.1 |
 | Celebrimbor   | eth0      | 10.67.3.2   | 10.67.3.1 |
-| Gilgalad   | eth0      | 10.67.3.3   | 10.67.3.1 |
-| Amandil   | eth0      | 10.67.3.4   | 10.67.3.1 |
-| Khamul   | eth0      | 10.67.3.5   | 10.67.3.1 |
+| Gilgalad 	  | eth0      | 10.67.3.3   | 10.67.3.1 |
+| Amandil 	  | eth0      | 10.67.3.4   | 10.67.3.1 |
+| Khamul 	  | eth0      | 10.67.3.5   | 10.67.3.1 |
 
 
 ## SOAL 1
@@ -89,9 +91,9 @@ iface eth5 inet static
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.1.2
+    address 10.67.5.2
     netmask 255.255.255.0
-    gateway 10.67.1.1
+    gateway 10.67.5.1
 dns-nameservers 192.168.122.1
 ```
 
@@ -99,43 +101,13 @@ dns-nameservers 192.168.122.1
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.1.3
+    address 10.67.4.2
     netmask 255.255.255.0
-    gateway 10.67.1.1
+    gateway 10.67.4.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
 #### Erendis Config
-```
-auto eth0
-iface eth0 inet static
-    address 10.67.2.2
-    netmask 255.255.255.0
-    gateway 10.67.2.1
-	up echo nameserver 192.168.122.1 > /etc/resolv.conf
-```
-
-#### Amdir Config
-```
-auto eth0
-iface eth0 inet static
-    address 10.67.2.3
-    netmask 255.255.255.0
-    gateway 10.67.2.1
-	up echo nameserver 192.168.122.1 > /etc/resolv.conf
-```
-
-#### Palantir Config
-```
-auto eth0
-iface eth0 inet static
-    address 10.67.2.4
-    netmask 255.255.255.0
-    gateway 10.67.2.1
-	up echo nameserver 192.168.122.1 > /etc/resolv.conf
-```
-
-#### Narvi Config
 ```
 auto eth0
 iface eth0 inet static
@@ -145,7 +117,7 @@ iface eth0 inet static
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
-#### Elros Config
+#### Amdir Config
 ```
 auto eth0
 iface eth0 inet static
@@ -155,13 +127,43 @@ iface eth0 inet static
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
+#### Palantir Config
+```
+auto eth0
+iface eth0 inet static
+    address 10.67.4.3
+    netmask 255.255.255.0
+    gateway 10.67.4.1
+	up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+#### Narvi Config
+```
+auto eth0
+iface eth0 inet static
+    address 10.67.4.4
+    netmask 255.255.255.0
+    gateway 10.67.4.1
+	up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
+#### Elros Config
+```
+auto eth0
+iface eth0 inet static
+    address 10.67.1.7
+    netmask 255.255.255.0
+    gateway 10.67.1.1
+	up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
 #### Pharazon Config
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.3.4
+    address 10.67.2.7
     netmask 255.255.255.0
-    gateway 10.67.3.1
+    gateway 10.67.2.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
@@ -169,9 +171,9 @@ iface eth0 inet static
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.3.5
+    address 10.67.1.2
     netmask 255.255.255.0
-    gateway 10.67.3.1
+    gateway 10.67.1.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
@@ -179,9 +181,9 @@ iface eth0 inet static
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.3.6
+    address 10.67.1.3
     netmask 255.255.255.0
-    gateway 10.67.3.1
+    gateway 10.67.1.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
@@ -189,7 +191,7 @@ iface eth0 inet static
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.1.2
+    address 10.67.1.4
     netmask 255.255.255.0
     gateway 10.67.1.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
@@ -199,23 +201,13 @@ iface eth0 inet static
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.1.3
-    netmask 255.255.255.0
-    gateway 10.67.1.1
-	up echo nameserver 192.168.122.1 > /etc/resolv.conf
-```
-
-#### Celeborn Config
-```
-auto eth0
-iface eth0 inet static
     address 10.67.2.2
     netmask 255.255.255.0
     gateway 10.67.2.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
-#### Oropher Config
+#### Celeborn Config
 ```
 auto eth0
 iface eth0 inet static
@@ -225,7 +217,7 @@ iface eth0 inet static
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
-#### Miriel Config
+#### Oropher Config
 ```
 auto eth0
 iface eth0 inet static
@@ -235,13 +227,23 @@ iface eth0 inet static
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
+#### Miriel Config
+```
+auto eth0
+iface eth0 inet static
+    address 10.67.1.5
+    netmask 255.255.255.0
+    gateway 10.67.1.1
+	up echo nameserver 192.168.122.1 > /etc/resolv.conf
+```
+
 #### Celebrimbor Config
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.3.2
+    address 10.67.2.6
     netmask 255.255.255.0
-    gateway 10.67.3.1
+    gateway 10.67.2.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
@@ -249,9 +251,9 @@ iface eth0 inet static
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.3.3
+    address 10.67.2.5
     netmask 255.255.255.0
-    gateway 10.67.3.1
+    gateway 10.67.2.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
@@ -259,9 +261,9 @@ iface eth0 inet static
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.3.4
+    address 10.67.1.6
     netmask 255.255.255.0
-    gateway 10.67.3.1
+    gateway 10.67.1.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
 ```
 
@@ -269,7 +271,7 @@ iface eth0 inet static
 ```
 auto eth0
 iface eth0 inet static
-    address 10.67.3.5
+    address 10.67.3.4
     netmask 255.255.255.0
     gateway 10.67.3.1
 	up echo nameserver 192.168.122.1 > /etc/resolv.conf
