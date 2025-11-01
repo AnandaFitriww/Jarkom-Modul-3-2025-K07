@@ -62,6 +62,7 @@ systemctl status isc-dhcp-relay
 # Konfigurasi Aldarion (DHCP Server)
 apt install isc-dhcp-server -y
 
+nano /etc/default/isc-dhcp-server
 INTERFACESv4="eth0"
 
 # Konfigurasi utama
