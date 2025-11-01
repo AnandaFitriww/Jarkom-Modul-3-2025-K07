@@ -1,6 +1,10 @@
 # ALDARION — DHCP SERVER (10.67.4.2)
 # Persiapan dasar
-echo "nameserver 192.168.122.1" > /etc/resolv.conf
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
+cat >/etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
 
 apt update -o Acquire::ForceIPv4=true -y
 apt install -y isc-dhcp-server
