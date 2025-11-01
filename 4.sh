@@ -1,16 +1,29 @@
 # ERENDIS (DNS MASTER)
-printf "nameserver 192.168.122.1\n" >/etc/resolv.conf
-apt-get update -o Acquire::ForceIPv4=true -y
-apt-get install -y bind9 bind9utils bind9-doc
+echo "nameserver 192.168.122.1" > /etc/resolv.conf
+apt update # atau apt update -o Acquire::ForceIPv4=true -y
+apt install bind9 bind9utils bind9-doc -y
 mkdir -p /etc/bind/zones /var/log/named
 
-nano /etc/bind/named.conf.local
+cat >/etc/bind/named.conf.options <<'EOF'
+options {
+    directory "/var/cache/bind";
+    listen-on { any; };
+    allow-query { any; };
+
+    recursion no; # Erendis adalah master, bukan forwarder
+    dnssec-validation no;
+    auth-nxdomain no;
+};
+EOF
+
+cat >/etc/bind/named.conf.local <<'EOF'
 zone "K07.com" {
     type master;
     file "/etc/bind/zones/db.K07.com";
     allow-transfer { 10.67.3.11; };
-    also-notify { 10.67.3.11; };
+    also-notify   { 10.67.3.11; };
 };
+EOF
 
 # /etc/bind/zones/db.K07.com
 cat >/etc/bind/zones/db.K07.com <<'EOF'
@@ -41,30 +54,48 @@ celeborn   IN A 10.67.2.11
 oropher    IN A 10.67.2.12
 EOF
 
+# Berikan kepemilikan ke user 'bind'
+chown -R bind:bind /etc/bind/zones /var/log/named
+chmod 644 /etc/bind/zones/db.K07.com
+
 # Validasi & Jalankan BIND9 (manual mode)
 named-checkconf
 named-checkzone K07.com /etc/bind/zones/db.K07.com
-pkill named 2>/dev/null || true
-nohup named -4 -u bind -c /etc/bind/named.conf > /var/log/named/named.log 2>&1 &
+service named restart
+service named status
+
 ss -lunp | grep :53
 
 # AMDIR (DNS SLAVE)
-printf "nameserver 192.168.122.1\n" >/etc/resolv.conf
-apt-get update -o Acquire::ForceIPv4=true -y
-apt-get install -y bind9 bind9utils
+echo "nameserver 192.168.122.1" > /etc/resolv.conf
+apt update # atau apt update -o Acquire::ForceIPv4=true -y
+apt install bind9 bind9utils -y
 mkdir -p /var/lib/bind /var/log/named
 
-nano /etc/bind/named.conf.local
+cat > /etc/bind/named.conf.options <<'EOF'
+options {
+    directory "/var/cache/bind";
+    listen-on { any; };
+    allow-query { any; };
+    recursion no;
+};
+EOF
+
+cat > /etc/bind/named.conf.local <<'EOF'
 zone "K07.com" {
     type slave;
-    masters { 10.67.3.10; };
+    masters { 10.67.3.10; }; # IP Erendis
     file "/var/lib/bind/db.K07.com";
 };
+EOF
+
+# Atur Izin Folder (agar bisa menulis salinan zona)
+chown -R bind:bind /var/lib/bind /var/cache/bind /var/log/named
 
 # Jalankan DNS Slave
 named-checkconf
-pkill named 2>/dev/null || true
-nohup named -4 -u bind -c /etc/bind/named.conf > /var/log/named/named.log 2>&1 &
+service named restart
+service named status
 ss -lunp | grep :53
 
 # Pengujian dari Klien (contoh: Pharazon)
