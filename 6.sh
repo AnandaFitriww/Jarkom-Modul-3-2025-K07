@@ -12,7 +12,7 @@ apt install -y isc-dhcp-server
 # Atur interface DHCP (udh tadi)
 nano /etc/default/isc-dhcp-server
 
-INTERFACESv4="eth1 eth2 eth3 eth4 eth5"
+INTERFACESv4="eth0"
 INTERFACESv6=""
 
 # Konfigurasi file utama DHCP
