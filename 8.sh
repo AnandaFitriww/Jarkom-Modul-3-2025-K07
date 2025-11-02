@@ -23,7 +23,7 @@ GRANT ALL PRIVILEGES ON laravel_db.* TO 'zeinganteng'@'%';
 FLUSH PRIVILEGES;
 EOF
 
-# Di lendil, Isildur, dan Anarion
+# Di elendil, Isildur, dan Anarion
 cd /var/www/resource-laravel
 
 # patch migrasi
@@ -193,3 +193,4 @@ lynx -dump http://10.67.1.12:8003
 lynx -dump http://elendil.k07.com:8001/api/airing
 lynx -dump http://isildur.k07.com:8002/api/airing
 lynx -dump http://anarion.k07.com:8003/api/airing
+
