@@ -1015,19 +1015,570 @@ Aldarion menetapkan aturan waktu peminjaman tanah. Ia mengatur:
 - Batas waktu maksimal peminjaman untuk semua adalah satu jam.
 
 
+### di Aldarion
+- Persiapan dasar
+```
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
+cat >/etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
+
+apt update -o Acquire::ForceIPv4=true -y
+apt install -y isc-dhcp-server
+```
+- Atur interface (tadi sudahh)
+```
+nano /etc/default/isc-dhcp-server
+
+INTERFACESv4="eth0"
+INTERFACESv6=""
+```
+- Update konfigurasi dhcpd.conf dengan waktu sewa yang baru
+```
+cat > /etc/dhcp/dhcpd.conf  <<'EOF'
+authoritative;
+
+default-lease-time 600; #maks 1 jem
+max-lease-time 3600;
+
+# Subnet Manusia
+subnet 10.67.1.0 netmask 255.255.255.0 {
+  option routers 10.67.1.1;
+  option broadcast-address 10.67.1.255;
+  option subnet-mask 255.255.255.0;
+  option domain-name-servers 10.67.5.2, 10.67.3.10;
+  default-lease-time 1800; #min 30 men
+  range 10.67.1.6 10.67.1.34;
+  range 10.67.1.68 10.67.1.94;
+}
+
+# Subnet Peri
+subnet 10.67.2.0 netmask 255.255.255.0 {
+  option routers 10.67.2.1;
+  option broadcast-address 10.67.2.255;
+  option subnet-mask 255.255.255.0;
+  option domain-name-servers 10.67.5.2, 10.67.3.10;
+  default-lease-time 600; #min 10 men
+  range 10.67.2.35 10.67.2.67;
+  range 10.67.2.96 10.67.2.121;
+}
+# Subnet Erendis ^`^sAmdir ^`^sKhamul
+subnet 10.67.3.0 netmask 255.255.255.0 {
+  option routers 10.67.3.1;
+  option broadcast-address 10.67.3.255;
+  option subnet-mask 255.255.255.0;
+  option domain-name-servers 10.67.5.2, 10.67.3.10;
+}
+
+# Reservasi alamat tetap Khamul
+host khamul {
+  hardware ethernet 02:42:5c:d1:69:00;
+  fixed-address 10.67.3.95;
+}
+# Subnet Aldarion ^`^sPalantir ^`^sNarvi
+subnet 10.67.4.0 netmask 255.255.255.0 {
+  option routers 10.67.4.1;
+  option broadcast-address 10.67.4.255;
+  option subnet-mask 255.255.255.0;
+  option domain-name-servers 10.67.5.2, 10.67.3.10;
+}
+
+# Subnet Minastir
+subnet 10.67.5.0 netmask 255.255.255.0 {
+  option routers 10.67.5.1;
+  option broadcast-address 10.67.5.255;
+  option subnet-mask 255.255.255.0;
+  option domain-name-servers 10.67.5.2, 10.67.3.10;
+}
+EOF
+```
+- jalankan ulang DHCP
+```
+service isc-dhcp-server restart
+service isc-dhcp-server status --no-pager || true
+```
+
+### Di Durin
+- Pastikan relay sudah aktif dan interface sudah benar, kemudian restart DHCP.
+```
+nano /etc/default/isc-dhcp-relay
+SERVERS="10.67.4.2"
+INTERFACES="eth1 eth2 eth3 eth4 eth5"
+OPTIONS=""
+
+service isc-dhcp-relay restart
+service isc-dhcp-server status --no-pager || true
+```
+
+### Uji dari klien manusia dan peri
+#### Di Klien Manusia (amandil dkk)
+- Tambahkan resolver awal (memastikan)
+```
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
+cat > /etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
+```
+- Memastikan DHCP client sudah terinstall
+```
+apt update -o Acquire::ForceIPv4=true -y
+apt install -y isc-dhcp-client
+```
+- Dapatkan IP
+```
+dhclient -r -v && dhclient -v
+```
+
+#### Di Klien Peri (gilgalad dkk)
+- Tambahkan resolver awal (memastikan)
+```
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
+cat > /etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
+```
+- Memastikan DHCP client sudah terinstall
+```
+apt update -o Acquire::ForceIPv4=true -y
+apt install -y isc-dhcp-client
+```
+- Dapatkan IP
+```
+dhclient -r -v && dhclient -v
+```
+
+<img width="319" height="492" alt="image" src="https://github.com/user-attachments/assets/f874e40b-b159-446d-b468-aba3d2581ef6" />
+<img width="305" height="493" alt="image" src="https://github.com/user-attachments/assets/d0a9cedc-d123-4eb2-b102-aad849a21cbc" />
+
+
+
 ## Soal 7
 Para Ksatria Númenor (Elendil, Isildur, Anarion) mulai membangun benteng pertahanan digital mereka menggunakan teknologi Laravel. Instal semua tools yang dibutuhkan (php8.4, composer, nginx) dan dapatkan cetak biru benteng dari Resource-laravel di setiap node worker Laravel. Cek dengan lynx di client.
+### Di Elendil, Isildur, dan Anarion
+- Atur DNS dan proxy agar bisa konek inet
+```
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" > /etc/resolv.conf
+export http_proxy=http://10.67.5.2:3128
+export https_proxy=http://10.67.5.2:3128
+export COMPOSER_ALLOW_SUPERUSER=1
+```
+- Install dependensi dasar
+```
+apt update -o Acquire::ForceIPv4=true -y
+apt install -y curl git unzip ca-certificates lsb-release gnupg apt-transport-https
+```
+- Tambahkan repo PHP 8.4
+```
+curl -fsSL https://packages.sury.org/php/apt.gpg | tee /etc/apt/trusted.gpg.d/sury.gpg >/dev/null
+echo "deb https://packages.sury.org/php $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/sury.list
+apt update -o Acquire::ForceIPv4=true -y
+```
+- Install PHP dan ngix
+```
+apt install -y \
+  php8.4-fpm php8.4-cli php8.4-common php8.4-curl php8.4-mbstring php8.4-xml \
+  php8.4-zip php8.4-gd php8.4-intl php8.4-bcmath php8.4-mysql php8.4-sqlite3 \
+  nginx
+```
+- Install composer
+```
+curl -o composer-setup.php https://getcomposer.org/installer
+php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+rm -f composer-setup.php
+composer --version
+```
+- Nuat direktori web dan hapus resources laravel yg lama (klo ada)
+```
+mkdir -p /var/www
+cd /var/www
+rm -rf resource-laravel
+```
+- clone resources, masuk ke folder kemudian update composer
+```
+git clone https://github.com/elshiraphine/laravel-simple-rest-api resource-laravel
+cd resource-laravel
+composer update --no-dev
+```
+- Salin file .env
+```
+cp .env.example .env
+```
+- Generate kunci aplikasi
+```
+php artisan key:generate
+```
+- Atur izin folder
+```
+chown -R www-data:www-data /var/www/resource-laravel
+chmod -R 775 /var/www/resource-laravel/storage
+chmod -R 775 /var/www/resource-laravel/bootstrap/cache
+```
+### Konfig nginx di setiap worker
+#### Di Elendil
+- buat domain
+```
+DOMAIN="elendil.k07.com"
+```
+- hapus vhost default
+```
+rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+```
+- Buat vhost baru
+```
+cat >/etc/nginx/sites-available/laravel.conf <<EOF
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    root /var/www/resource-laravel/public;
+    index index.php index.html;
+    location / { try_files \$uri \$uri/ /index.php?\$query_string; }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+    }
+}
+EOF
+```
+- Aktifkan vhost dan restart service
+```
+ln -sf /etc/nginx/sites-available/laravel.conf /etc/nginx/sites-enabled/laravel.conf
+nginx -t && service nginx restart && service php8.4-fpm restart
+```
+#### Di Isildur
+- buat domain
+```
+DOMAIN="isildur.k07.com"
+```
+- hapus vhost default
+```
+rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+```
+- Buat vhost baru
+```
+cat >/etc/nginx/sites-available/laravel.conf <<EOF
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    root /var/www/resource-laravel/public;
+    index index.php index.html;
+    location / { try_files \$uri \$uri/ /index.php?\$query_string; }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+    }
+}
+EOF
+```
+- Aktifkan vhost dan restart service
+```
+ln -sf /etc/nginx/sites-available/laravel.conf /etc/nginx/sites-enabled/laravel.conf
+nginx -t && service nginx restart && service php8.4-fpm restart
+```
+#### Di Anarion
+- buat domain
+```
+DOMAIN="anarion.k07.com"
+```
+- hapus vhost default
+```
+rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+```
+- Buat vhost baru
+```
+cat >/etc/nginx/sites-available/laravel.conf <<EOF
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    root /var/www/resource-laravel/public;
+    index index.php index.html;
+    location / { try_files \$uri \$uri/ /index.php?\$query_string; }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+    }
+}
+EOF
+```
+- Aktifkan vhost dan restart service
+```
+ln -sf /etc/nginx/sites-available/laravel.conf /etc/nginx/sites-enabled/laravel.conf
+nginx -t && service nginx restart && service php8.4-fpm restart
+```
+### Verifikasi di klien
+- Atur dns dan proxy (kalo belum)
+```
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" >/etc/resolv.conf
+cat >/etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
+```
+` Install lynx
+```
+apt update -o Acquire::ForceIPv4=true -y
+apt install -y lynx
+```
+- Tes ketiga worker
+```
+lynx -dump http://elendil.k07.com
+lynx -dump http://isildur.k07.com
+lynx -dump http://anarion.k07.com
+```
+
+<img width="607" height="422" alt="image" src="https://github.com/user-attachments/assets/380507cc-7fcd-4990-be74-99652dcb7296" />
 
 
 ## Soal 8
 Setiap benteng Númenor harus terhubung ke sumber pengetahuan, Palantir. Konfigurasikan koneksi database di file .env masing-masing worker. Setiap benteng juga harus memiliki gerbang masuk yang unik; atur nginx agar Elendil mendengarkan di port 8001, Isildur di 8002, dan Anarion di 8003. Jangan lupa jalankan migrasi dan seeding awal dari Elendil. Buat agar akses web hanya bisa melalui domain nama, tidak bisa melalui ip.
 
+### Palantir
+- Setup akses inet via ministar (egein if nid)
+```
+printf "nameserver 10.67.5.2\noptions timeout:2 attempts:2\n" > /etc/resolv.conf
+cat > /etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
+```
+- Install MariaDB
+```
+apt update -o Acquire::ForceIPv4=true -y
+apt install -y mariadb-server
+```
+- Buka akses jaringan, restart MariaDB
+```
+sed -i 's/^\(bind-address\s*=\s*\).*/\10.0.0.0/' /etc/mysql/mariadb.conf.d/50-server.cnf
+service mariadb restart
+```
+- Buat database dan user baru
+```
+mariadb -u root <<'EOF'
+CREATE DATABASE IF NOT EXISTS laravel_db;
+DROP USER IF EXISTS 'laravel_user'@'%';
+CREATE USER 'zeinganteng'@'%' IDENTIFIED BY 'nandakocak';
+GRANT ALL PRIVILEGES ON laravel_db.* TO 'zeinganteng'@'%';
+FLUSH PRIVILEGES;
+EOF
+```
+### Di Elendil, Isildur, dan Anarion
+- Masuk ke direktori web
+```
+cd /var/www/resource-laravel
+```
+- Masukkan database
+```
+# patch migrasi
+cat > database/migrations/2023_02_08_103126_create_airings_table.php <<'EOF'
+<?php
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+return new class extends Migration {
+    public function up() {
+        Schema::create('airings', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('status'); 
+            $table->date('start_date'); 
+            $table->timestamps();
+        });
+    }
+    public function down() {
+        Schema::dropIfExists('airings');
+    }
+};
+EOF
+
+# patch seeder
+cat > database/seeders/airing.json <<'EOF'
+{
+  "data": [
+    {"title": "Attack on Titan", "status": "Finished Airing", "start_date": "2013-04-07"},
+    {"title": "One Piece", "status": "Currently Airing", "start_date": "1999-10-20"},
+    {"title": "Jujutsu Kaisen", "status": "Finished Airing", "start_date": "2020-10-03"}
+  ]
+}
+EOF
+cat > database/seeders/AiringSeeder.php <<'EOF'
+<?php
+namespace Database\Seeders;
+use App\Models\Airing;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
+class AiringSeeder extends Seeder {
+    public function run() {
+        $json = File::get(database_path('seeders/airing.json'));
+        $data = json_decode($json, true);
+        Airing::truncate();
+        if (isset($data['data'])) {
+            foreach ($data['data'] as $item) {
+                Airing::create([
+                    'title' => $item['title'],
+                    'status' => $item['status'],
+                    'start_date' => $item['start_date'],
+                ]);
+            }
+        }
+    }
+}
+EOF
+cat > database/seeders/DatabaseSeeder.php <<'EOF'
+<?php
+namespace Database\Seeders;
+use Illuminate\Database\Seeder;
+class DatabaseSeeder extends Seeder {
+    public function run() {
+        $this->call([
+            AiringSeeder::class
+        ]);
+    }
+}
+EOF
+```
+- Konfigurasi .env sesuai user dan database yang dibuat tadi.
+```
+sed -i "s/DB_HOST=127.0.0.1/DB_HOST=10.67.4.3/" .env
+sed -i "s/DB_DATABASE=laravel/DB_DATABASE=laravel_db/" .env
+sed -i "s/^DB_USERNAME=.*/DB_USERNAME=zeinganteng/" .env
+sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=nandakocak/" .env
+```
+#### Di Elendil (khusus ada seeding)
+- Migrasi dan seeding
+```
+php artisan migrate:fresh --seed
+```
+- Konfigurasi Nginx
+```
+cat > /etc/nginx/sites-available/laravel.conf <<'EOF'
+# Blokir akses via IP
+server {
+    listen 10.67.1.10:8001 default_server;
+    server_name _;
+    return 403;
+}
+# Izinkan akses via domain
+server {
+    listen 10.67.1.10:8001;
+    server_name elendil.K07.com;
+    root /var/www/resource-laravel/public;
+    index index.php index.html;
+    location / { try_files $uri $uri/ /index.php?$query_string; }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+    }
+}
+EOF
+nginx -t && service nginx restart
+```
+#### Di Isildur
+- Konfigurasi Nginx
+```
+cat > /etc/nginx/sites-available/laravel.conf <<'EOF'
+# Blokir akses via IP
+server {
+    listen 10.67.1.11:8002 default_server;
+    server_name _;
+    return 403;
+}
+# Izinkan akses via domain
+server {
+    listen 10.67.1.11:8002;
+    server_name isildur.K07.com;
+    root /var/www/resource-laravel/public;
+    index index.php index.html;
+    location / { try_files $uri $uri/ /index.php?$query_string; }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+    }
+}
+EOF
+nginx -t && service nginx restart
+```
+#### Di Anarion
+- Konfig Nginx
+```
+cat > /etc/nginx/sites-available/laravel.conf <<'EOF'
+# Blokir akses via IP
+server {
+    listen 10.67.1.12:8003 default_server;
+    server_name _;
+    return 403;
+}
+# Izinkan akses via domain
+server {
+    listen 10.67.1.12:8003;
+    server_name anarion.K07.com;
+    root /var/www/resource-laravel/public;
+    index index.php index.html;
+    location / { try_files $uri $uri/ /index.php?$query_string; }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+    }
+}
+EOF
+nginx -t && service nginx restart
+```
+### Uji di klien, misal Pharazon
+- Install lynx
+```
+apt update -o Acquire::ForceIPv4=true -y
+apt install -y lynx
+```
+- Tes blokir akses via IP
+```
+lynx -dump http://10.67.1.10:8001
+lynx -dump http://10.67.1.11:8002
+lynx -dump http://10.67.1.12:8003
+```
+- Tes koneksi database
+```
+lynx -dump http://elendil.k07.com:8001/api/airing
+lynx -dump http://isildur.k07.com:8002/api/airing
+lynx -dump http://anarion.k07.com:8003/api/airing
+```
+
+<img width="390" height="152" alt="image" src="https://github.com/user-attachments/assets/2a9ff895-dd49-4c9e-ab35-24be6fc1a76f" />
+<img width="424" height="205" alt="image" src="https://github.com/user-attachments/assets/40579fa4-8682-4737-a145-a2126b752fa8" />
+
 
 ## Soal 9
 Pastikan setiap benteng berfungsi secara mandiri. Dari dalam node client masing-masing, gunakan lynx untuk melihat halaman utama Laravel dan curl /api/airing untuk memastikan mereka bisa mengambil data dari Palantir.
 
+### Di klien, misal Pharazon
+- Pastikan dns dan proxy
+```
+printf "nameserver 10.67.5.2\n" > /etc/resolv.conf
 
-## Soal 10
-Pemimpin bijak Elros ditugaskan untuk mengkoordinasikan pertahanan Númenor. Konfigurasikan nginx di Elros untuk bertindak sebagai reverse proxy. Buat upstream bernama kesatria_numenor yang berisi alamat ketiga worker (Elendil, Isildur, Anarion). Atur agar semua permintaan yang datang ke domain elros.<xxxx>.com diteruskan secara merata menggunakan algoritma Round Robin ke backend.
+cat >/etc/apt/apt.conf.d/00proxy <<'EOF'
+Acquire::http::Proxy  "http://10.67.5.2:3128";
+Acquire::https::Proxy "http://10.67.5.2:3128";
+EOF
+```
+- Instalasi curl dan lynx
+```
+apt update -o Acquire::ForceIPv4=true -y
+apt install -y lynx curl
+```
+- Uji elendil
+```
+lynx -dump http://elendil.K07.com:8001/api/airing
+curl http://elendil.K07.com:8001/api/airing
+```
+- Uji Isildur
+```
+lynx -dump http://isildur.K07.com:8002/api/airing
+curl http://isildur.K07.com:8002/api/airing
+```
+- Uji Anarion
+```
+lynx -dump http://anarion.K07.com:8003/api/airing
+curl http://anarion.K07.com:8003/api/airing
+```
 
-
+<img width="421" height="211" alt="image" src="https://github.com/user-attachments/assets/ae4c81a7-de74-472b-8252-6e782a98ef5d" />
